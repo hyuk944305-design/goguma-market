@@ -20,7 +20,7 @@ export default async function ProductsPage() {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, title, price, status, created_at')
+    .select('id, title, price, status, created_at, images')
     .order('created_at', { ascending: false })
 
   return (
@@ -58,9 +58,23 @@ export default async function ProductsPage() {
             <li key={p.id}>
               <Link
                 href={`/products/${p.id}`}
-                className="flex items-center justify-between bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow"
+                className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-md transition-shadow"
               >
-                <div className="min-w-0">
+                {/* 대표 사진 (없으면 고구마 아이콘) */}
+                {p.images && p.images.length > 0 ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.images[0]}
+                    alt={p.title}
+                    className="w-20 h-20 object-cover rounded-xl border border-gray-100 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-xl bg-orange-50 flex items-center justify-center text-3xl flex-shrink-0">
+                    🍠
+                  </div>
+                )}
+
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -73,7 +87,7 @@ export default async function ProductsPage() {
                   <h2 className="font-semibold text-gray-800 truncate">{p.title}</h2>
                   <p className="text-orange-500 font-bold mt-1">{formatPrice(p.price)}</p>
                 </div>
-                <span className="text-gray-300 text-xl ml-4">›</span>
+                <span className="text-gray-300 text-xl ml-2">›</span>
               </Link>
             </li>
           ))}

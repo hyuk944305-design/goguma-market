@@ -68,6 +68,21 @@ export default async function ProductDetailPage({
           {formatPrice(product.price)}
         </p>
 
+        {/* 상품 사진들 */}
+        {product.images && product.images.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {product.images.map((url: string, i: number) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={url}
+                src={url}
+                alt={`상품 사진 ${i + 1}`}
+                className="w-full aspect-square object-cover rounded-xl border border-gray-100"
+              />
+            ))}
+          </div>
+        )}
+
         {product.description ? (
           <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
             {product.description}
