@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { signup } from '@/app/auth/actions'
 
 export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -35,6 +37,17 @@ export default function SignupPage() {
         : result.error
       setError(msg)
       setLoading(false)
+      return
+    }
+
+    if (result?.needsConfirmation) {
+      router.push(
+        '/auth/login?message=' +
+          encodeURIComponent('이메일을 확인해주세요! 인증 후 로그인하실 수 있어요.')
+      )
+    } else {
+      router.push('/')
+      router.refresh()
     }
   }
 

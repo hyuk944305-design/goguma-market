@@ -19,7 +19,7 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  return { success: true }
 }
 
 export async function signup(formData: FormData) {
@@ -29,7 +29,7 @@ export async function signup(formData: FormData) {
   const password = formData.get('password') as string
   const nickname = formData.get('nickname') as string
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -42,7 +42,11 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/auth/login?message=이메일을 확인해주세요! 인증 후 로그인하실 수 있어요.')
+
+  // 이메일 인증이 켜져 있으면 session이 없음 → 로그인 페이지로 안내
+  // 인증이 꺼져 있으면 바로 로그인된 상태 → 홈으로
+  const needsConfirmation = !data.session
+  return { success: true, needsConfirmation }
 }
 
 export async function logout() {
