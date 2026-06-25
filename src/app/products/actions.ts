@@ -227,3 +227,106 @@ export async function deleteProduct(formData: FormData) {
   revalidatePath('/products')
   return { success: true }
 }
+
+// 좋아요 누르기/취소 (이미 눌렀으면 취소, 아니면 추가)
+export async function toggleLike(productId: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: '로그인이 필요해요.' }
+  }
+
+  // 이미 눌렀는지 확인
+  const { data: existing } = await supabase
+    .from('product_likes')
+    .select('product_id')
+    .eq('product_id', productId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (existing) {
+    // 취소
+    const { error } = await supabase
+      .from('product_likes')
+      .delete()
+      .eq('product_id', productId)
+      .eq('user_id', user.id)
+    if (error) return { error: error.message }
+    revalidatePath(`/products/${productId}`)
+    return { liked: false }
+  }
+
+  // 추가
+  const { error } = await supabase
+    .from('product_likes')
+    .insert({ product_id: productId, user_id: user.id })
+  if (error) return { error: error.message }
+  revalidatePath(`/products/${productId}`)
+  return { liked: true }
+}
+
+// 댓글 작성
+export async function addComment(productId: string, formData: FormData) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: '로그인이 필요해요.' }
+  }
+
+  const content = (formData.get('content') as string)?.trim()
+  if (!content) {
+    return { error: '댓글 내용을 입력해주세요.' }
+  }
+  if (content.length > 1000) {
+    return { error: '댓글은 1000자까지 쓸 수 있어요.' }
+  }
+
+  // 작성자 닉네임을 댓글에 함께 저장 (회원정보가 바뀌어도 작성 당시 이름 유지)
+  const nickname =
+    (user.user_metadata?.nickname as string) || user.email?.split('@')[0] || '익명'
+
+  const { error } = await supabase.from('comments').insert({
+    product_id: productId,
+    user_id: user.id,
+    author_nickname: nickname,
+    content,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/products/${productId}`)
+  return { success: true }
+}
+
+// 댓글 삭제 (본인 댓글만)
+export async function deleteComment(commentId: string, productId: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: '로그인이 필요해요.' }
+  }
+
+  const { error } = await supabase
+    .from('comments')
+    .delete()
+    .eq('id', commentId)
+    .eq('user_id', user.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/products/${productId}`)
+  return { success: true }
+}

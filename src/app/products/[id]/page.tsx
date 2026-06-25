@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import DeleteButton from '../DeleteButton'
+import LikeButton from '../LikeButton'
+import CommentSection, { type Comment } from '../CommentSection'
 
 function formatPrice(price: number) {
   return price === 0 ? '나눔' : `${price.toLocaleString('ko-KR')}원`
@@ -34,6 +36,30 @@ export default async function ProductDetailPage({
   if (!product) {
     notFound()
   }
+
+  // 좋아요 개수와, 현재 사용자가 눌렀는지 여부
+  const { count: likeCount } = await supabase
+    .from('product_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('product_id', id)
+
+  let likedByMe = false
+  if (user) {
+    const { data: myLike } = await supabase
+      .from('product_likes')
+      .select('product_id')
+      .eq('product_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    likedByMe = !!myLike
+  }
+
+  // 댓글 목록 (오래된 순)
+  const { data: comments } = await supabase
+    .from('comments')
+    .select('id, author_nickname, content, created_at, user_id')
+    .eq('product_id', id)
+    .order('created_at', { ascending: true })
 
   const isOwner = user?.id === product.seller_id
   const createdAt = new Date(product.created_at).toLocaleDateString('ko-KR', {
@@ -90,6 +116,16 @@ export default async function ProductDetailPage({
         ) : (
           <p className="text-gray-400">상품 설명이 없어요.</p>
         )}
+
+        {/* 좋아요 버튼 */}
+        <div className="mt-6 pt-6 border-t border-gray-50">
+          <LikeButton
+            productId={product.id}
+            initialLiked={likedByMe}
+            initialCount={likeCount ?? 0}
+            isLoggedIn={!!user}
+          />
+        </div>
       </div>
 
       {/* 본인 글일 때만 수정/삭제 버튼 표시 */}
@@ -104,6 +140,13 @@ export default async function ProductDetailPage({
           <DeleteButton id={product.id} />
         </div>
       )}
+
+      {/* 댓글 영역 */}
+      <CommentSection
+        productId={product.id}
+        comments={(comments as Comment[]) ?? []}
+        currentUserId={user?.id ?? null}
+      />
     </div>
   )
 }
