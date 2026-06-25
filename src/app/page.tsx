@@ -50,6 +50,7 @@ export default async function Home() {
             icon: '🏷️',
             title: '중고 판매',
             desc: '필요 없는 물건을 이웃에게 판매하고 새 주인을 찾아주세요.',
+            href: '/products',
           },
           {
             icon: '🔍',
@@ -61,16 +62,33 @@ export default async function Home() {
             title: '채팅 거래',
             desc: '판매자와 직접 채팅으로 안전하게 거래해요.',
           },
-        ].map((item) => (
-          <div
-            key={item.title}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-          >
-            <div className="text-3xl mb-3">{item.icon}</div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">{item.title}</h3>
-            <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-          </div>
-        ))}
+        ].map((item) => {
+          const cardContent = (
+            <>
+              <div className="text-3xl mb-3">{item.icon}</div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">{item.title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+            </>
+          )
+
+          // href가 있는 카드는 클릭하면 해당 페이지로 이동
+          return item.href ? (
+            <Link
+              key={item.title}
+              href={item.href}
+              className="block bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-orange-200 transition-all"
+            >
+              {cardContent}
+            </Link>
+          ) : (
+            <div
+              key={item.title}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            >
+              {cardContent}
+            </div>
+          )
+        })}
       </section>
 
       {/* 개발 중 안내 배너 */}
