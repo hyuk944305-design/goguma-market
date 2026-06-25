@@ -19,6 +19,12 @@ export default async function Header() {
 
         {/* 네비게이션 */}
         <nav className="flex items-center gap-3">
+          <Link
+            href="/products"
+            className="text-sm text-gray-600 hover:text-orange-500 transition-colors px-3 py-2 rounded-lg hover:bg-orange-50"
+          >
+            판매글
+          </Link>
           {user ? (
             <>
               <span className="text-sm text-gray-600 hidden sm:block">
